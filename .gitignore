@@ -17,6 +17,8 @@ ouro-results.tsv
 # Agent prompt files (generated per-session)
 CLAUDE.md
 AGENTS.md
+.claude/settings.json
+.claude/settings.local.json
 
 # Experimental artifacts
 dev/

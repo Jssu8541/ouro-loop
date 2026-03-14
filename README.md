@@ -202,12 +202,44 @@ phase   verdict   bound_violations   notes
 
 ---
 
+## Claude Code Hooks — Automatic BOUND Enforcement
+
+Ouro Loop includes 4 hooks that enforce BOUND constraints at the tool level. When installed, the agent **physically cannot** edit DANGER ZONE files without user approval — no matter what instructions it receives.
+
+```bash
+# Install hooks in your project
+cp ~/.ouro-loop/hooks/settings.json.template .claude/settings.json
+# Edit paths in settings.json to point to your ouro-loop installation
+```
+
+| Hook | Event | What it does |
+|------|-------|-------------|
+| `bound-guard.sh` | PreToolUse:Edit/Write | Parses CLAUDE.md DANGER ZONES, **blocks** edits to protected files (exit 2) |
+| `root-cause-tracker.sh` | PostToolUse:Edit/Write | Tracks per-file edit count, warns at 3+, strongly warns at 5+ |
+| `drift-detector.sh` | PreToolUse:Edit/Write | Warns when touching 5+ directories (scope drift) |
+| `recall-gate.sh` | PreCompact | Re-injects BOUND into context before compression |
+
+Verified in live Claude Code sessions:
+- `framework.py` (DANGER ZONE): **BLOCKED** with exit 2, agent sees denial reason
+- `hooks/bound-guard.sh` (DANGER ZONE): **BLOCKED** — hook protects itself
+- `CONTRIBUTING.md` (safe): passed silently, zero overhead
+
+This is what makes Ouro Loop different from instruction-only approaches: **BOUND is enforced by the runtime, not by the agent's good behavior.**
+
+---
+
 ## Project Structure
 
 ```
 program.md          — methodology instructions (human edits this)
 framework.py        — runtime CLI: state, verification, logging (agent uses this)
 prepare.py          — project scanning and initialization (not modified)
+hooks/
+  bound-guard.sh      DANGER ZONE enforcement (PreToolUse, exit 2 block)
+  root-cause-tracker.sh  repeated-edit detection (PostToolUse)
+  drift-detector.sh   scope drift warning (PreToolUse)
+  recall-gate.sh      BOUND re-injection on context compaction (PreCompact)
+  settings.json.template  ready-to-use hooks configuration
 modules/
   bound.md            Stage 0: define DANGER ZONES, NEVER DO, IRON LAWS
   map.md              Stage 1: understand the problem space
