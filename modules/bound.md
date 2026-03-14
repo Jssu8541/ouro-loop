@@ -2,13 +2,11 @@
 
 The foundation of Ouro Loop. Before writing any code, define what must never break.
 
-## Why Boundaries First
+## The Philosophy of The Binding
 
-Most development failures aren't from bad code — they're from breaking something
-that should have been sacred. A junior dev drops a migration file. A refactor
-silently changes a financial calculation. A "quick fix" disables a security check.
+In vibe coding, most catastrophic failures aren't from "bad syntax" — they're from a summoned agent breaking an ancient, load-bearing pillar it didn't understand. An agent hallucinates a migration drop. A massive refactor silently alters a core financial formula. 
 
-BOUND prevents these by making constraints explicit before work begins.
+**The Binding** (`BOUND`) prevents this. By establishing the event horizon and making constraints explicit *before* work begins, you grant the agent absolute safety to operate autonomously within that gravitational pull.
 
 ## The Three BOUND Elements
 

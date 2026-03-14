@@ -1,60 +1,48 @@
-# The Ouro Loop Manifesto: Constraint-Driven AI Development
+# The Ouroboros Contract (Manifesto)
 
-*The era of "vibecoding" is over. The era of bounded autonomy has begun.*
+> **"To grant an entity absolute autonomy, you must first bind it with absolute constraints."**
 
-## The Problem: The Unbounded Agent
+We are in the era of "Vibe Coding." We no longer command syntax; we summon agents, describe desires, and watch the code write itself. It's exhilarating. It feels like magic.
 
-When frontier AI models became capable of writing code, the industry rejoiced at the prospect of "vibecoding"—the idea that you could simply describe an intent and watch an entire application materialize. For small scripts, toy apps, and weekend projects, this unstructured approach is magical.
+But wild magic is dangerous. 
 
-But in real engineering—blockchain consensus engines, high-frequency trading systems, payment gateways, and medical software—vibecoding is terrifying. 
+When you tell an unbounded AI agent to "build a payments feature," it doesn't know that the `calculate_tax()` function is an ancient, load-bearing pillar that must never be touched. It doesn't know that mutating the `core_router.js` will break the mobile app. Left to its own devices, an unbounded agent will hallucinate, regress established architecture, and happily commit the digital equivalent of burning down the village to cook a meal.
 
-In a production environment, you don't start by asking what an agent can build. You start by identifying **what must never break**. 
+## The Failure of Passive Observability
 
-The current generation of AI agents operate like brilliant but reckless junior developers. They optimize for the shortest path to a passing test, often silently altering architectural invariants, bypassing security checks, or introducing subtle non-determinism. When building systems that govern real value, the question isn't whether an agent *can* write the code; it's whether you can *trust* the agent not to destroy the system while doing it.
+Our first instinct was to build "guardrails." We created monitoring tools. We added linting thresholds. We made the AI stop and ask for permission: *"Human, I found an error on line 42. What should I do?"*
 
-## The False Solution: Passive Observability
+This is **passive observability**. It turns the developer from a creator into a babysitter. You are constantly interrupted by notifications, approving trivial pull requests, and debugging the agent's context collapse. You aren't vibe coding anymore; you are micro-managing a junior developer who never sleeps.
 
-The industry's first reaction to this recklessness was passive observability. We built complex monitoring tools. The agent attempts a change, the system detects a potential issue, and it halts, raising an alert: *"Human, is this okay?"*
+## Precision Autonomy: The Event Horizon
 
-This negates the entire promise of AI. If a human must review every tangential decision, we have not built autonomous software engineering; we have built high-latency pair programming. 
+**Ouro Loop** proposes a radical shift: **Precision Autonomy through Absolute Constraint**.
 
-- **Monitor:** Detects problem → Alerts human → Waits.
-- **Ouro:** Detects problem → Consults boundaries → Decides → Acts → Reports.
+Before you let the agent write a single line of code, you establish an **Event Horizon** (Stage 0: BOUND).
+You write down the `IRON LAWS` (invariants that must always be true) and the `DANGER ZONES` (files that trigger catastrophic failure if mishandled). 
 
-## The True Solution: BOUND (Constraint-Driven Development)
+By explicitly defining the inescapable gravitational boundary of what the agent *cannot* do, you paradoxically grant it absolute freedom to orbit and execute *everything else*.
 
-Ouro Loop is built on a fundamental realization borrowed from Andrej Karpathy's `autoresearch`: **The constraint space defines the creative space.**
+*   "Never use floats for currency."
+*   "Never alter `auth_middleware.py`."
+*   "All API responses must include a `request_id`."
 
-Autoresearch gives an AI a rigid 5-minute training budget and a single metric (`val_bpb`). By fixing the boundaries absolutely, the AI is granted absolute freedom *within* those boundaries to mutate the architecture, optimizer, or hyperparameters. If it fails, it autonomously reverts and tries again. 
+Once the agent is bound by these laws, it is free.
 
-**Ouro Loop maps this paradigm to general software engineering.**
+## The Serpent: Autonomous Remediation (The Bite)
 
-Instead of a 5-minute compute budget, we define **BOUND**:
-1. **DANGER ZONES:** Explicitly define the blast radii (e.g., `consensus/` or `auth/`). 
-2. **NEVER DO:** Absolute prohibitions (e.g., "Never modify payment calculations").
-3. **IRON LAWS:** Formally verifiable invariants (e.g., "State root must be deterministic").
+With the circle drawn, the agent begins the **Loop**. It maps, plans, and builds. But more importantly, it **verifies**.
 
-### Precision Autonomy
+In Ouro Loop, when an agent runs its tests and a verification check fails, it does *not* alert the human. It does not stop formatting. Instead, the serpent bites its own tail. 
 
-BOUND is not a restriction; it is an authorization. 
+It triggers **Autonomous Remediation**. It reads its own error logs, consults its playbook, and makes a decision. It might revert the commit. It might rewrite the function. It might switch to a completely different architectural approach. 
 
-By explicitly defining the 20 things an agent can *never* do, you implicitly authorize it to do the 10,000 things required to actually solve the problem. 
+As long as the agent remains inside the `BOUND`—as long as it hasn't touched a `DANGER ZONE` or violated an `IRON LAW`—it is allowed to fail, consume that failure, and try again, infinitely. 
 
-If an agent hits an error while optimizing P2P gossip, and it knows it hasn't touched the `consensus/` DANGER ZONE or violated the "no floating point" IRON LAW, it doesn't need to ask for permission to try a different architectural approach. It autonomously catches the failure, reverts the state, decides on a new path, acts on it, and simply logs: `[REMEDIATED] Action: revert_and_retry`.
+It consumes its own errors so the creator may rest.
 
-This is **Precision Autonomy**. 
+## The Goal of Ouro Loop
 
-## The Loop
+Ouro Loop is not a complex piece of software. It is a philosophy, a methodology, and a lightweight `framework.py` state machine. It exists to teach AI agents how to govern themselves.
 
-Ouro Loop shifts the developer's role from writing code to defining the constraints that guard the code. 
-
-1. **BOUND:** Define the IRON LAWS.
-2. **MAP:** Understand the dependencies and attack surfaces.
-3. **PLAN:** Decompose the task into verifiable phases.
-4. **BUILD:** Construct the solution within the constraints.
-5. **VERIFY:** Multi-layer validation (Gates -> Self-Assessment -> External Review).
-6. **LOOP:** Autonomously remediate, revert, or advance. 
-
-We are moving from instructing AI on *how* to build something, to defining the physics of the universe it builds within. Once the physics are set, the AI is free to evolve the system. 
-
-*The AI is no longer a junior developer needing constant review. It is a Ouro of its own workflow.*
+Stop babysitting your agents. Draw the circle. State the laws. Release the Loop.

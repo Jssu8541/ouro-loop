@@ -10,9 +10,9 @@ wheels/
 .venv
 worktrees/
 
-# Ralph runtime state (per-project, not committed)
-.ralph/
-ralph-results.tsv
+# Ouro runtime state (per-project, not committed)
+.ouro/
+ouro-results.tsv
 
 # Agent prompt files (generated per-session)
 CLAUDE.md

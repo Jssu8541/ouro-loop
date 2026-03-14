@@ -158,5 +158,5 @@ The remediation playbook grows through the LOOP stage:
 - New patterns are added from real experience
 - Project-specific playbooks extend the defaults
 
-This is cross-project Loop 4: "what worked in RiverBit's consensus debugging
-also works in ClawBet's payment edge cases — extract the pattern."
+This is cross-project Loop 4: "what worked in one project's consensus debugging
+also works in another project's payment edge cases — extract the pattern."

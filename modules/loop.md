@@ -96,12 +96,12 @@ When updating BOUND from a discovery:
 - **Ignoring trends**: Three RETRYs in a row means something systemic is wrong. Don't just keep retrying.
 - **BOUND ossification**: BOUND should grow and evolve. If it hasn't changed in 10 phases, it might be too generic.
 
-## Loop Completion
+## The Infinite Cycle (Loop Completion)
 
-A task is complete when:
-1. All phases pass VERIFY.
-2. BOUND is updated with any discoveries.
-3. Results are logged to ouro-results.tsv.
-4. No open RETRY verdicts.
+The Serpent rests only when:
+1. All phases pass the merciless judgment of `VERIFY`.
+2. The `BOUND` circle is updated with any new structural discoveries.
+3. The cycle's results are etched into `ouro-results.tsv`.
+4. The agent has successfully consumed and remediated all its own errors (No open `RETRY` verdicts).
 
-Then: return to Stage 0 (BOUND review) for the next task.
+Then: return to Stage 0 (The Binding) to summon the agent for the next task.

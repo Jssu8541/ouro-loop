@@ -1,76 +1,243 @@
 # Ouro Loop
 
-*A constraint-driven development methodology for autonomous AI agents.*
+![Ouro Loop](assets/banner.png)
 
-![teaser](progress.png)
+> **"To grant an entity absolute autonomy, you must first bind it with absolute constraints."**
 
-*One day, frontier AI research used to be done by meat computers in between eating, sleeping, having other fun, and synchronizing once in a while using sound wave interconnect in the ritual of "group meeting". That era is long gone... This repo is the story of how it all began. -@karpathy, March 2026, [autoresearch](https://github.com/karpathy/autoresearch).*
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python >=3.10](https://img.shields.io/badge/python->=3.10-blue.svg)](https://www.python.org/downloads/)
+[![Status: Experimental](https://img.shields.io/badge/status-experimental-orange.svg)]()
 
-The original `autoresearch` repo gave an AI agent a tiny LLM training setup and let it experiment autonomously overnight. It succeeded because it provided a rigid constraint space (a 5-minute training budget, a single `val_bpb` metric) within which the AI was free to mutate architecture and hyperparameters.
+In the era of "vibe coding," we are no longer just writing syntax; we are launching execution agents into deep space. However, unbound trajectory is dangerous. Unbound AI agents hallucinate, break production constraints, and regress established architectural patterns.
 
-**Ouro Loop maps this exact paradigm to general software engineering.**
+**Ouro Loop** is a lightweight runtime and methodology that solves this. It maps Andrej Karpathy's `autoresearch` concept (autonomous AI experimentation) to general software engineering. 
 
-We give an AI agent a development methodology—boundaries, verification layers, and remediation playbooks—and let it guard your codebase autonomously. 
+It formally introduces **The Event Horizon**: A process where the developer establishes the absolute center of gravity (Iron Laws, Danger Zones). The AI Agent is granted absolute autonomy to continuously build, verify, and infinitely self-correct (The Ouroboros) within that inescapable gravitational pull, never crossing the boundary into catastrophic failure.
 
-The core idea: **You don't start from "what to build" — you start from "what must never break."**
+The core idea: you're not programming Python files like you normally would. Instead, you are programming the `program.md` methodology instructions and the `CLAUDE.md` boundary definitions that provide context to the AI agent. The developer draws the magical circle (Iron Laws, Danger Zones). The AI Agent — The Serpent — is granted absolute autonomy to build, verify, and self-correct (Ouroboros) within that circle.
 
-## How it works
+---
 
-The repo provides the methodology modules and a lightweight runtime (`framework.py`) that the AI agent uses to track its state.
+## How It Works
 
-- **`framework.py`** — The runtime. It tracks the current phase, runs multi-layer verifications, checks bounds, and logs results.
-- **`modules/`** — The methodology. Six core stages (`bound.md`, `map.md`, `plan.md`, `build.md`, `verify.md`, `loop.md`) and the critical `remediation.md` playbook. **These provide the context to the AI agent.**
-- **`CLAUDE.md`** — The project-specific boundaries (DANGER ZONES, NEVER DO, IRON LAWS). **This is edited and iterated on by the human.**
+The repo is deliberately kept small. Only three files matter:
 
-By design, Ouro Loop shifts the AI from a passive monitor ("Human, something broke, what do I do?") to a bounded ouro ("I tried this, it broke an iron law, so I autonomously reverted and am now trying this alternative approach").
+- **`program.md`** — the methodology instructions. Defines the six-stage loop (BOUND, MAP, PLAN, BUILD, VERIFY, LOOP) and the autonomous remediation rules. Point your agent here and let it go. **This file is iterated on by the human**.
+- **`framework.py`** — lightweight runtime for state tracking, verification gates, and logging. The agent uses this CLI to check its own work. **This file can be extended by the agent**.
+- **`prepare.py`** — project scanning and initialization. Creates the `.ouro/` state directory. Not modified.
 
-## Quick start
+```mermaid
+graph TD
+    classDef default fill:#1e1e1e,stroke:#4a4a4a,stroke-width:1px,color:#d4d4d4;
+    classDef highlight fill:#2d3748,stroke:#63b3ed,stroke-width:2px,color:#fff;
+    classDef boundary fill:#4a1c40,stroke:#fc8181,stroke-width:2px,color:#fff;
 
-**Requirements:** Python 3.10+, [uv](https://docs.astral.sh/uv/)
+    BOUND(("Step 0<br/><b>BOUND</b><br/>(Set Constraints)")):::boundary
+    MAP["Step 1<br/><b>MAP</b><br/>(Understand)"]
+    PLAN["Step 2<br/><b>PLAN</b><br/>(Decompose)"]
+    BUILD["Step 3<br/><b>BUILD</b><br/>(Create)"]
+    VERIFY{"Step 4<br/><b>VERIFY</b><br/>(Judge)"}
+    REMEDIATE["<b>REMEDIATE</b><br/>(Autonomous Fix)"]:::highlight
+    NEXT(("Next<br/>Phase"))
+
+    BOUND --> MAP
+    MAP --> PLAN
+    PLAN --> BUILD
+    BUILD --> VERIFY
+    VERIFY -- "FAIL (inside BOUND)" --> REMEDIATE
+    REMEDIATE --> BUILD
+    VERIFY -- "PASS" --> NEXT
+    NEXT -.-> BUILD
+```
+
+When verification fails, the agent does *not* ask for human help. It consults `modules/remediation.md`, decides on a fix, reverts/retries, and loops — so long as it hasn't breached the outer edge of the BOUND. Read [The Manifesto](MANIFESTO.md) for the deep-dive on Precision Autonomy.
+
+---
+
+## Quick Start
+
+**Requirements:** Python 3.10+, Git, any AI coding agent.
+
+### 1. Clone Ouro Loop
 
 ```bash
-# 1. Install dependencies (if you haven't)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/anthropics/ouro-loop.git ~/.ouro-loop
+```
 
-# 2. Enter your target software project directory
+### 2. Scan your project
+
+```bash
 cd /path/to/your/project
-
-# 3. Initialize Ouro Loop in that project
-python /path/to/ouro-loop/prepare.py init .
-
-# 4. Generate the CLAUDE.md template to define your boundaries
-python /path/to/ouro-loop/prepare.py template claude .
+python ~/.ouro-loop/prepare.py scan .
 ```
 
-Write your `CLAUDE.md` to define your project's `DANGER ZONES` and `IRON LAWS`. Then, spin up your AI agent (Claude, Cursor, Aider, OpenAlpha) in your repository and point it at the `CLAUDE.md` and the Ouro Loop modules.
-
-## The Paradigm Shift: Precision Autonomy
-
-Read the [Manifesto](MANIFESTO.md) for the full deep-dive.
-
-The current generation of AI agents operate like brilliant but reckless junior developers. They optimize for the shortest path to a passing test. In real engineering—consensus engines, financial systems, medical software—this "vibecoding" is dangerous.
-
-Ouro Loop replaces unstructured "vibecoding" with **Precision Autonomy**. 
-
-By explicitly defining the 20 things an agent can *never* do (the BOUND), you implicitly authorize it to autonomously do the 10,000 things required to solve the problem. When an agent hits an error inside the boundary, it doesn't wait for human permission; it consults its remediation playbook, reverts, and tries a new approach.
-
-## Structure
+This shows you what Ouro Loop sees:
 
 ```
-framework.py    — State management, stage transitions, verification
-prepare.py      — Project scanning and initialization
-modules/        — The methodology (bound, map, plan, build, verify, loop, remediation)
-templates/      — Templates for CLAUDE.md and phase plans
-examples/       — Real-world, anonymized examples of Ouro Loop in action
-MANIFESTO.md    — The philosophy of Constraint-Driven AI Development
+============================================================
+  Ouro Loop — Project Scan
+============================================================
+  Project:    my-payment-service
+  Types:      Python
+  Files:      42       Lines:     3,200
+
+  Languages:
+    Python                  35 files  ###############
+    SQL                      7 files  #######
+
+  CLAUDE.md:  Not found
+  BOUND:      Not defined
+  Tests:      Found
+  CI:         Found
+
+  Recommendations:
+    1. Define BOUND (DANGER ZONES, NEVER DO, IRON LAWS) before building
+    2. Create CLAUDE.md with BOUND section
+============================================================
 ```
 
-## Examples
+### 3. Initialize and draw the boundaries
 
-Check out the `examples/` directory to see how Ouro Loop is applied to different domains:
-- `blockchain-l1`: Guarding consensus algorithms and deterministic execution.
-- `consumer-product`: Guarding user data privacy and migration state.
-- `financial-system`: Guarding penny-level precision and transaction integrity.
+```bash
+python ~/.ouro-loop/prepare.py init .        # Creates .ouro/ state directory
+python ~/.ouro-loop/prepare.py template claude .  # Generates CLAUDE.md template
+```
+
+Edit `CLAUDE.md` to define your project's actual boundaries. Here's what a real BOUND looks like:
+
+```markdown
+## BOUND
+
+### DANGER ZONES
+- `src/payments/calculator.py` — financial calculations, penny-level precision
+- `migrations/` — database schema, irreversible in production
+
+### NEVER DO
+- Never use float for monetary values — always Decimal
+- Never delete or rename migration files
+- Never commit without running the test suite
+
+### IRON LAWS
+- All monetary values use Decimal with 2-digit precision
+- All API responses include request_id field
+- Test coverage for payment module never drops below 90%
+```
+
+See `examples/` for complete BOUND definitions across [blockchain](examples/blockchain-l1/CLAUDE.md), [financial](examples/financial-system/CLAUDE.md), [consumer](examples/consumer-product/CLAUDE.md), and [ML research](examples/ml-research/CLAUDE.md) projects.
+
+### 4. Point your AI agent and go
+
+Spin up Claude Code, Cursor, Aider, or any AI coding agent in your project and prompt:
+
+```
+Read program.md from ~/.ouro-loop/ and the CLAUDE.md in this project.
+Let's start the Ouro Loop for this task: [describe your task].
+```
+
+The `program.md` file is essentially a lightweight "skill" — it tells the agent how to work within your boundaries. The agent will read your BOUND, MAP the problem, PLAN phases, BUILD incrementally, VERIFY through multi-layer gates, and LOOP feedback back into BOUND.
+
+---
+
+## The Runtime CLI
+
+`framework.py` is the state machine and verification gatekeeper. The agent calls these during the loop:
+
+```bash
+python framework.py scan .         # Scan project structure
+python framework.py status .       # Where are we in the loop?
+python framework.py bound-check .  # Are DANGER ZONES / IRON LAWS defined?
+python framework.py verify .       # Run all verification gates
+python framework.py log PASS --path . --notes "phase 1 done"  # Record result
+python framework.py advance .      # Move to next phase
+```
+
+**Verify** runs multi-layer gate checks and shows exactly what's healthy and what's not:
+
+```
+==================================================
+  Ouro Loop — Verification
+==================================================
+  Layer 1 — Gates:
+    [+] EXIST           CLAUDE.md exists
+    [+] RELEVANCE       3 files changed
+    [!] ROOT_CAUSE      Hot files: src/payments/calc.py
+    [+] MOMENTUM        5 recent commits
+
+  Layer 2 — Self-Assessment:
+    [+] bound_compliance BOUND section found
+    [+] tests_exist     Test files found
+
+  Overall: PASS
+==================================================
+```
+
+**When verification fails**, the agent autonomously remediates and reports what it did:
+
+```
+[REMEDIATED] gate=ROOT_CAUSE action=revert_and_retry
+  was: editing src/payments/calc.py for the 4th time (same TypeError)
+  did: reverted to commit a1b2c3d, re-analyzed from scratch
+  now: trying middleware pattern instead
+  bound: no DANGER ZONE touched, no IRON LAW affected
+```
+
+Results are logged to `ouro-results.tsv` for full auditability:
+
+```
+phase   verdict   bound_violations   notes
+1/3     PASS      0                  transactions endpoint + tests
+2/3     RETRY     0                  ROOT_CAUSE warning, fixing
+2/3     PASS      0                  fixed after retry
+3/3     PASS      0                  validation complete
+```
+
+---
+
+## Project Structure
+
+```
+program.md          — methodology instructions (human edits this)
+framework.py        — runtime CLI: state, verification, logging (agent uses this)
+prepare.py          — project scanning and initialization (not modified)
+modules/
+  bound.md            Stage 0: define DANGER ZONES, NEVER DO, IRON LAWS
+  map.md              Stage 1: understand the problem space
+  plan.md             Stage 2: decompose into severity-ordered phases
+  build.md            Stage 3: RED-GREEN-REFACTOR-COMMIT
+  verify.md           Stage 4: three-layer verification gates
+  loop.md             Stage 5: feedback closure
+  remediation.md      autonomous remediation playbook
+templates/            starter templates for CLAUDE.md, phase plans, checklists
+examples/             real-world BOUND definitions from four project types
+```
+
+## Design Choices
+
+- **Boundaries before code.** Define what must never break before writing any code. A financial system's NEVER DO list prevents more bugs than any test suite.
+- **Autonomous remediation.** Unlike monitoring tools that detect-and-alert, Ouro Loop agents detect-decide-act-report. Like `autoresearch` auto-reverts when val_bpb regresses, Ouro Loop auto-remediates when verification fails — inside BOUND, no human permission needed.
+- **Three files that matter.** `program.md` (methodology), `framework.py` (runtime), `prepare.py` (init). Everything else is reference.
+- **Zero dependencies.** Pure Python 3.10+. Works with any AI agent, any language, any project type.
+
+## Comparison with autoresearch
+
+| | autoresearch | ouro-loop |
+|--|-------------|-----------|
+| Core idea | Give AI a training loop, let it experiment | Give AI a methodology, let it guard |
+| Human programs | `program.md` (experiment strategy) | `program.md` (dev strategy) + `CLAUDE.md` (boundaries) |
+| AI modifies | `train.py` (model code) | Target project code + `framework.py` |
+| Fixed constraint | 5-minute training budget | BOUND (DANGER ZONES, NEVER DO, IRON LAWS) |
+| Core metric | val_bpb (lower is better) | Multi-layer verification (gates + self-assessment) |
+| On failure | Auto-revert, try next experiment | Auto-remediate, try alternative approach |
+| Read-only | `prepare.py` | `prepare.py` + `modules/` |
+
+## Contributing
+
+The most valuable contributions are **real-world bindings**. If you used Ouro Loop to bound an agent in a complex domain, submit a sanitized `CLAUDE.md` and `phase-plan.md` to `examples/`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Philosophy
+
+By explicitly defining the 20 things an agent can *never* do (the BOUND), you implicitly authorize it to autonomously do the 10,000 things required to solve the problem. The constraint space defines the creative space. Read [The Manifesto](MANIFESTO.md) for the full deep-dive.
 
 ## License
+
 MIT
