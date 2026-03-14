@@ -61,7 +61,7 @@ When verification fails, the agent does *not* ask for human help. It consults `m
 ### 1. Clone Ouro Loop
 
 ```bash
-git clone https://github.com/anthropics/ouro-loop.git ~/.ouro-loop
+git clone https://github.com/VictorVVedtion/ouro-loop.git ~/.ouro-loop
 ```
 
 ### 2. Scan your project
