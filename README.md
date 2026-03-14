@@ -127,7 +127,12 @@ Edit `CLAUDE.md` to define your project's actual boundaries. Here's what a real 
 - Test coverage for payment module never drops below 90%
 ```
 
-See `examples/` for complete BOUND definitions across [blockchain](examples/blockchain-l1/CLAUDE.md), [financial](examples/financial-system/CLAUDE.md), [consumer](examples/consumer-product/CLAUDE.md), and [ML research](examples/ml-research/CLAUDE.md) projects.
+See `examples/` for complete BOUND definitions and **real session logs** showing the methodology in action:
+
+- [**Blockchain L1**](examples/blockchain-l1/) — BOUND for consensus/p2p, plus a [real session log](examples/blockchain-l1/session-log.md) where the agent tested 5 hypotheses, autonomously remediated 4 failures, and found a root cause that was architectural (HTTP routing), not code-level.
+- [**Consumer Product**](examples/consumer-product/) — BOUND for audio/sync, plus a [real session log](examples/consumer-product/session-log.md) where ROOT_CAUSE gate caught a lazy fix and pushed the agent toward a genuinely better solution.
+- [**Financial System**](examples/financial-system/) — DANGER ZONES around payments, Decimal precision IRON LAWS.
+- [**ML Research**](examples/ml-research/) — autoresearch-style single-metric optimization reframed as BOUND.
 
 ### 4. Point your AI agent and go
 
