@@ -6,11 +6,32 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python >=3.10](https://img.shields.io/badge/python->=3.10-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/VictorVVedtion/ouro-loop/actions/workflows/test.yml/badge.svg)](https://github.com/VictorVVedtion/ouro-loop/actions/workflows/test.yml)
 [![Status: Experimental](https://img.shields.io/badge/status-experimental-orange.svg)]()
 
-**Ouro Loop** is an open-source framework for running **autonomous AI coding agents** with guardrails. It gives AI agents (Claude Code, Cursor, Aider, Codex, or any LLM-based coding assistant) a structured **long-running development workflow** with built-in verification, constraint enforcement, and **self-healing capabilities** — so you can let the agent run overnight and wake up to working code, not a broken codebase.
+## What is Ouro Loop?
 
-Inspired by Andrej Karpathy's [`autoresearch`](https://github.com/karpathy/autoresearch) (autonomous AI experimentation for ML research), Ouro Loop maps the same paradigm to **general software engineering**: define rigid boundaries, let the AI agent iterate autonomously within them, auto-revert on failure, and never stop.
+**Ouro Loop** is an open-source framework that gives AI coding agents (Claude Code, Cursor, Aider, Codex) a structured autonomous loop with runtime-enforced guardrails. It implements **bounded autonomy** — the developer defines absolute constraints (DANGER ZONES, NEVER DO rules, IRON LAWS) using the BOUND system, then the agent loops autonomously through Build → Verify → Self-Fix cycles. When verification fails, the agent doesn't ask for help — it consults its remediation playbook, reverts, tries a different approach, and reports what it did. Constraints are enforced at the runtime level through Claude Code Hooks (exit 2 hard-block), not by relying on the agent's "good behavior." Inspired by Karpathy's [autoresearch](https://github.com/karpathy/autoresearch), extended from ML to general software engineering. Zero dependencies, pure Python 3.10+.
+
+| | |
+|---|---|
+| **What it does** | Let AI agents code overnight without breaking things |
+| **How it works** | Define boundaries (BOUND) → AI loops: Build → Verify → Self-Fix |
+| **What you get** | `program.md` (method) + `framework.py` (runtime) + 4 hooks (enforcement) |
+| **Requirements** | Python 3.10+, Git, any AI agent. Zero dependencies. |
+
+### Is Ouro Loop for you?
+
+**This is for you if:**
+- You want to let an AI agent run autonomously for hours (overnight builds, long refactors)
+- Your project has files that must never be touched without review (payments, auth, consensus)
+- You've experienced AI agents hallucinating paths, breaking constraints, or getting stuck in loops
+- You want auditable, structured autonomous development — not "vibe and pray"
+
+**This is NOT for you if:**
+- You're building a quick prototype or hackathon project (BOUND setup overhead isn't worth it)
+- You're writing single-file scripts (the methodology overhead exceeds the benefit)
+- You want real-time interactive coding (Ouro Loop is designed for "set it and let it run")
 
 ### The Problem with Unbound AI Agents
 
@@ -228,6 +249,35 @@ This is what makes Ouro Loop different from instruction-only approaches: **BOUND
 
 ---
 
+## Real Results from Autonomous Sessions
+
+These results come from real Ouro Loop sessions on production codebases. Full session logs with methodology observations are available in `examples/`.
+
+### Blockchain L1 — Consensus Performance Under Load
+
+An AI agent was tasked with investigating why `precommit` latency spiked from 4ms to 200ms under transaction load on a 4-validator PBFT blockchain. Working inside a DANGER ZONE (`consensus/`):
+
+- **5 hypotheses tested, 4 autonomous remediations** — the ROOT_CAUSE gate fired 4 times, each time correctly identifying that the agent was fixing symptoms, not the cause
+- After 3 consecutive failed hypotheses, the 3-failure step-back rule kicked in: "stop fixing symptoms, re-examine the architecture" — which led to discovering the real root cause
+- **Root cause was architectural, not code-level** — a single-node HTTP bottleneck was causing consensus-wide delays. The fix was a Caddy reverse proxy, not a code change
+- **The agent caught its own flawed experiment** — when testing an alternative, it ran 4x full stress instead of 1x distributed. It identified the flaw before drawing wrong conclusions
+
+| Metric | Before | After | Delta |
+|--------|--------|-------|-------|
+| Precommit (under load) | 100-200ms | 4ms | **-98%** |
+| Block time (under load) | 111-200ms | 52-57ms | **-53%** |
+| TPS Variance | 40.6% | 1.6% | **-96%** |
+| SysErr rate | 0.00% | 0.00% | = (IRON LAW) |
+| Blocks/sec (soak load) | ~8.0 | ~18.5 | **+131%** |
+
+### Consumer Product — Lint Remediation in React/Next.js
+
+A simpler session where the ROOT_CAUSE gate prevented a lazy fix: instead of suppressing ESLint errors, the agent was pushed toward genuinely better solutions (replacing `<a>` with Next.js `<Link>`, properly handling `useEffect` state patterns).
+
+See the full session logs: [Blockchain L1](examples/blockchain-l1/session-log.md) | [Consumer Product](examples/consumer-product/session-log.md)
+
+---
+
 ## Project Structure
 
 ```
@@ -302,16 +352,37 @@ Ouro Loop is agent-agnostic. It works with any AI coding assistant that can read
 ## FAQ
 
 **Q: How is this different from just using `.cursorrules` or `CLAUDE.md`?**
-A: Those define static instructions. Ouro Loop adds a **runtime loop** — state tracking, multi-layer verification, autonomous remediation, and phase management. The agent doesn't just follow rules; it verifies compliance, detects drift, and self-corrects.
+A: `.cursorrules` and `CLAUDE.md` define static instructions that the agent can ignore. Ouro Loop adds a **runtime loop** — state tracking, multi-layer verification, autonomous remediation, and phase management. The agent doesn't just follow rules; it verifies compliance, detects drift, and self-corrects. Most importantly, BOUND constraints are enforced by runtime hooks (exit 2 hard-block), not by the agent's good behavior.
 
 **Q: Can the agent really fix its own mistakes?**
-A: Yes, within BOUND. If verification fails and the issue is inside the boundary (not a DANGER ZONE), the agent consults `modules/remediation.md` for a decision playbook: revert, retry with a different approach, or escalate. It reports what it did, not what it's thinking of doing.
+A: Yes, within BOUND. When verification fails and the issue is inside the boundary (not a DANGER ZONE), the agent consults `modules/remediation.md` for a decision playbook: revert, retry with a different approach, or escalate. It reports what it did, not what it's thinking of doing. In a real blockchain session, the agent autonomously remediated 4 failures across 5 hypotheses and found a root cause that was architectural (HTTP routing), not code-level.
+
+**Q: How do I add guardrails to Claude Code?**
+A: Ouro Loop provides 4 Claude Code Hooks that enforce constraints at the tool level. Install them by copying `hooks/settings.json.template` to `.claude/settings.json` and editing the paths. The `bound-guard.sh` hook parses your CLAUDE.md DANGER ZONES and physically blocks edits to protected files. No agent can bypass exit code 2.
+
+**Q: How do I let an AI agent code overnight?**
+A: Define your BOUND (DANGER ZONES, NEVER DO, IRON LAWS) in CLAUDE.md, install the hooks, then tell the agent to read `program.md` and start the loop. The agent will iterate through Build → Verify → Self-Fix cycles autonomously. When verification fails, it remediates and retries. When it passes, it advances to the next phase. The loop continues until all phases are complete.
+
+**Q: What is bounded autonomy in AI coding?**
+A: Bounded autonomy is a paradigm where AI coding agents are granted full autonomous decision-making power within explicitly defined constraints. By defining the 20 things an agent cannot do (the BOUND), you implicitly authorize it to do the 10,000 things required to solve the problem. It's the middle path between human-in-the-loop (constant interruptions) and unbounded agents (unconstrained risk).
+
+**Q: How to prevent AI agents from hallucinating file paths?**
+A: Ouro Loop's EXIST verification gate checks whether referenced files, APIs, and modules actually exist before the agent proceeds. The `bound-guard.sh` hook also validates file paths against the project structure. If a file doesn't exist, the gate fails and triggers autonomous remediation — the agent corrects its reference instead of proceeding with hallucinated paths.
+
+**Q: Can AI agents fix their own bugs autonomously?**
+A: Yes — this is called autonomous remediation. When a verification gate fails, the agent doesn't alert a human. It reads its error logs, consults its remediation playbook, and takes action: revert, retry with a different approach, or escalate only if a DANGER ZONE is involved. The key constraint is BOUND — the agent can self-fix anything inside the boundary.
+
+**Q: How to prevent context decay in long AI coding sessions?**
+A: Ouro Loop addresses context decay through the RECALL verification gate and the `recall-gate.sh` hook. The gate monitors whether the agent can still recall key constraints. The hook fires before context compression (PreCompact event) and re-injects the BOUND section into the compressed context, preventing constraint amnesia during long sessions.
 
 **Q: How long can the agent run autonomously?**
 A: As long as phases remain. Each phase is independently verifiable, so the agent can run for hours across many phases. The NEVER STOP instruction in `program.md` keeps the loop going until all phases pass or an EMERGENCY-level issue is hit.
 
 **Q: Do I need to install anything?**
-A: No. Zero dependencies. Pure Python 3.10+ standard library. No pip install, no npm, no Docker.
+A: No. Zero dependencies. Pure Python 3.10+ standard library. Clone the repo and point your agent at `program.md`. Optionally install hooks for runtime enforcement.
+
+**Q: When should I NOT use Ouro Loop?**
+A: Don't use Ouro Loop for quick prototypes, hackathon projects, or single-file scripts — the BOUND setup overhead isn't worth it. It's also not designed for real-time interactive coding sessions. Ouro Loop shines when you need to "set it and let it run" — overnight builds, long-running refactors, and multi-phase autonomous development on codebases with critical constraints.
 
 ## Contributing
 
