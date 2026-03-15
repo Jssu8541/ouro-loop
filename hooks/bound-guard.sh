@@ -11,10 +11,14 @@ CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 # No file path = not a file edit, allow
 [ -z "$FILE_PATH" ] && exit 0
 
-# Find CLAUDE.md
+# Find CLAUDE.md — recursive upward search (up to 5 levels)
 CLAUDE_MD=""
-for candidate in "$CWD/CLAUDE.md" "$CWD/../CLAUDE.md"; do
-  [ -f "$candidate" ] && CLAUDE_MD="$candidate" && break
+SEARCH_DIR="$CWD"
+for _ in 1 2 3 4 5; do
+  [ -f "$SEARCH_DIR/CLAUDE.md" ] && CLAUDE_MD="$SEARCH_DIR/CLAUDE.md" && break
+  PARENT=$(dirname "$SEARCH_DIR")
+  [ "$PARENT" = "$SEARCH_DIR" ] && break  # reached filesystem root
+  SEARCH_DIR="$PARENT"
 done
 
 # No CLAUDE.md = no BOUND defined, allow (warn via stderr)
