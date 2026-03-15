@@ -180,8 +180,13 @@ See `examples/` for complete BOUND definitions and **real session logs** showing
 Spin up Claude Code, Cursor, Aider, or any AI coding agent in your project and prompt:
 
 ```
+# If installed via pip:
+Read program.md from $(python -c "import framework; print(framework.__file__)" | xargs dirname)
+and the CLAUDE.md in this project. Start the Ouro Loop for this task: [your task].
+
+# If cloned:
 Read program.md from ~/.ouro-loop/ and the CLAUDE.md in this project.
-Let's start the Ouro Loop for this task: [describe your task].
+Let's start the Ouro Loop for this task: [your task].
 ```
 
 The `program.md` file is essentially a lightweight "skill" — it tells the agent how to work within your boundaries. The agent will read your BOUND, MAP the problem, PLAN phases, BUILD incrementally, VERIFY through multi-layer gates, and LOOP feedback back into BOUND.
@@ -285,9 +290,13 @@ The agent reads this log to avoid repeating past mistakes without needing to rep
 Ouro Loop includes 5 hooks that enforce BOUND constraints at the tool level. When installed, the agent **physically cannot** edit DANGER ZONE files without user approval — no matter what instructions it receives.
 
 ```bash
-# Install hooks in your project
+# If cloned:
 cp ~/.ouro-loop/hooks/settings.json.template .claude/settings.json
-# Edit paths in settings.json to point to your ouro-loop installation
+# Edit $OURO_LOOP_DIR paths in settings.json to point to ~/.ouro-loop
+
+# If installed via pip — find the hooks directory:
+python -c "import framework; from pathlib import Path; print(Path(framework.__file__).parent / 'hooks')"
+# Then copy settings.json.template from that path
 ```
 
 | Hook | Event | What it does |
@@ -419,7 +428,7 @@ A: `.cursorrules` and `CLAUDE.md` define static instructions that the agent can 
 A: Yes, within BOUND. When verification fails and the issue is inside the boundary (not a DANGER ZONE), the agent consults `modules/remediation.md` for a decision playbook: revert, retry with a different approach, or escalate. It reports what it did, not what it's thinking of doing. In a real blockchain session, the agent autonomously remediated 4 failures across 5 hypotheses and found a root cause that was architectural (HTTP routing), not code-level.
 
 **Q: How do I add guardrails to Claude Code?**
-A: Ouro Loop provides 4 Claude Code Hooks that enforce constraints at the tool level. Install them by copying `hooks/settings.json.template` to `.claude/settings.json` and editing the paths. The `bound-guard.sh` hook parses your CLAUDE.md DANGER ZONES and physically blocks edits to protected files. No agent can bypass exit code 2.
+A: Ouro Loop provides 5 Claude Code Hooks that enforce constraints at the tool level. Install them by copying `hooks/settings.json.template` to `.claude/settings.json` and editing the paths. The `bound-guard.sh` hook parses your CLAUDE.md DANGER ZONES and physically blocks edits to protected files. No agent can bypass exit code 2.
 
 **Q: How do I let an AI agent code overnight?**
 A: Define your BOUND (DANGER ZONES, NEVER DO, IRON LAWS) in CLAUDE.md, install the hooks, then tell the agent to read `program.md` and start the loop. The agent will iterate through Build → Verify → Self-Fix cycles autonomously. When verification fails, it remediates and retries. When it passes, it advances to the next phase. The loop continues until all phases are complete.
