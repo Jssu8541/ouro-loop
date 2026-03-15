@@ -5,8 +5,10 @@
 > **"To grant an entity absolute autonomy, you must first bind it with absolute constraints."**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://img.shields.io/pypi/v/ouro-loop.svg)](https://pypi.org/project/ouro-loop/)
 [![Python >=3.10](https://img.shields.io/badge/python->=3.10-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/VictorVVedtion/ouro-loop/actions/workflows/test.yml/badge.svg)](https://github.com/VictorVVedtion/ouro-loop/actions/workflows/test.yml)
+[![Tests: 415](https://img.shields.io/badge/tests-415_passed-brightgreen.svg)]()
 [![Status: Experimental](https://img.shields.io/badge/status-experimental-orange.svg)]()
 
 ## What is Ouro Loop?
@@ -17,8 +19,8 @@
 |---|---|
 | **What it does** | Let AI agents code overnight without breaking things |
 | **How it works** | Define boundaries (BOUND) → AI loops: Build → Verify → Self-Fix |
-| **What you get** | `program.md` (method) + `framework.py` (runtime) + 4 hooks (enforcement) |
-| **Requirements** | Python 3.10+, Git, any AI agent. Zero dependencies. |
+| **What you get** | `program.md` (method) + `framework.py` (runtime) + 5 hooks (enforcement) + reflective log |
+| **Requirements** | Python 3.10+, Git, any AI agent. Zero dependencies. `pip install ouro-loop` |
 
 ### Is Ouro Loop for you?
 
@@ -83,7 +85,15 @@ When verification fails, the agent does *not* ask for human help. It consults `m
 
 **Requirements:** Python 3.10+, Git, any AI coding agent.
 
-### 1. Clone Ouro Loop
+### 1. Install Ouro Loop
+
+**Option A — pip (recommended):**
+
+```bash
+pip install ouro-loop
+```
+
+**Option B — clone:**
 
 ```bash
 git clone https://github.com/VictorVVedtion/ouro-loop.git ~/.ouro-loop
@@ -93,6 +103,11 @@ git clone https://github.com/VictorVVedtion/ouro-loop.git ~/.ouro-loop
 
 ```bash
 cd /path/to/your/project
+
+# If installed via pip:
+python -m prepare scan .
+
+# If cloned:
 python ~/.ouro-loop/prepare.py scan .
 ```
 
@@ -124,8 +139,13 @@ This shows you what Ouro Loop sees:
 ### 3. Initialize and draw the boundaries
 
 ```bash
-python ~/.ouro-loop/prepare.py init .        # Creates .ouro/ state directory
-python ~/.ouro-loop/prepare.py template claude .  # Generates CLAUDE.md template
+# If installed via pip:
+python -m prepare init .           # Creates .ouro/ state directory
+python -m prepare template claude .  # Generates CLAUDE.md template
+
+# If cloned:
+python ~/.ouro-loop/prepare.py init .
+python ~/.ouro-loop/prepare.py template claude .
 ```
 
 Edit `CLAUDE.md` to define your project's actual boundaries. Here's what a real BOUND looks like:
@@ -170,26 +190,20 @@ The `program.md` file is essentially a lightweight "skill" — it tells the agen
 
 ## The Runtime CLI
 
-`framework.py` is the state machine and verification gatekeeper. The agent calls these during the loop:
+`framework.py` is the state machine and verification gatekeeper. If installed via pip, use the `ouro` command:
 
 ```bash
-python framework.py scan .         # Scan project structure
-python framework.py status .       # Where are we in the loop?
-python framework.py bound-check .  # Are DANGER ZONES / IRON LAWS defined?
-python framework.py verify .       # Run all verification gates
-python framework.py log PASS --path . --notes "phase 1 done"  # Record result
-python framework.py advance .      # Move to next phase
+ouro status .         # Where are we in the loop?
+ouro bound-check .    # Are DANGER ZONES / IRON LAWS defined?
+ouro verify .         # Run all verification gates (Layer 1 + 2 + 3)
+ouro log PASS --path . --notes "phase 1 done"  # Record result + reflective log
+ouro advance .        # Move to next phase
+ouro reflect .        # View three-layer reflective log (WHAT/WHY/PATTERN)
 ```
 
-**Quick help:** Use `--help` to see all available commands:
+Or use `python framework.py` directly if cloned. Run `ouro --help` for all commands.
 
-```bash
-python framework.py --help        # Show all commands
-python framework.py status --help # Show status command options
-python framework.py verify --help # Show verify command options
-```
-
-**Verify** runs multi-layer gate checks and shows exactly what's healthy and what's not:
+**Verify** runs three-layer gate checks — 5 gates + self-assessment + human review triggers:
 
 ```
 ==================================================
@@ -199,15 +213,20 @@ python framework.py verify --help # Show verify command options
     [+] EXIST           CLAUDE.md exists
     [+] RELEVANCE       3 files changed
     [!] ROOT_CAUSE      Hot files: src/payments/calc.py
+    [+] RECALL          BOUND loaded: 2 zones, 3 prohibitions, 2 laws
     [+] MOMENTUM        5 recent commits
 
   Layer 2 — Self-Assessment:
     [+] bound_compliance BOUND section found
     [+] tests_exist     Test files found
 
+  Layer 3 — External Review: Not required
+
   Overall: PASS
 ==================================================
 ```
+
+Layer 3 triggers human review when: changes touch a DANGER ZONE, 3+ consecutive RETRYs, or architectural complexity is detected.
 
 **When verification fails**, the agent autonomously remediates and reports what it did:
 
@@ -229,11 +248,41 @@ phase   verdict   bound_violations   notes
 3/3     PASS      0                  validation complete
 ```
 
+### Reflective Log — Three-Layer Self-Awareness
+
+Every `ouro log` writes a structured JSONL entry (`.ouro/reflective-log.jsonl`) that the agent can read at the start of each iteration to understand its own behavioral patterns:
+
+```
+ouro reflect .
+============================================================
+  Ouro Loop — Reflective Log (last 3 entries)
+============================================================
+
+  #3 [2026-03-15T12:30:00]
+  WHAT: BUILD 2/5 → FAIL (overall: REVIEW)
+        Gates: EXIST[+] RELEVANCE[!] ROOT_CAUSE[!] RECALL[+] MOMENTUM[+]
+        DZ contact: src/payments/stripe.py (zone: src/payments/)
+  WHY:  complexity=complex | Touches DANGER ZONE: src/payments/stripe.py
+        notes: payment validation failed
+  PATTERN: velocity=DECELERATING | failures=2 | retry_rate=40%
+        hot: src/payments/stripe.py, src/payments/types.py
+  >> DRIFT: working in DANGER ZONE — extra caution required
+  >> HOT FILES: src/payments/stripe.py — possible symptom-chasing
+============================================================
+```
+
+Each entry has three layers:
+- **WHAT** — facts: verdict, gate statuses, changed files, DANGER ZONE contacts
+- **WHY** — decisions: complexity routing, review triggers, BOUND state
+- **PATTERN** — self-awareness: stuck loops, velocity trends, hot files, drift signals
+
+The agent reads this log to avoid repeating past mistakes without needing to replay the full session.
+
 ---
 
 ## Claude Code Hooks — Automatic BOUND Enforcement
 
-Ouro Loop includes 4 hooks that enforce BOUND constraints at the tool level. When installed, the agent **physically cannot** edit DANGER ZONE files without user approval — no matter what instructions it receives.
+Ouro Loop includes 5 hooks that enforce BOUND constraints at the tool level. When installed, the agent **physically cannot** edit DANGER ZONE files without user approval — no matter what instructions it receives.
 
 ```bash
 # Install hooks in your project
@@ -243,9 +292,10 @@ cp ~/.ouro-loop/hooks/settings.json.template .claude/settings.json
 
 | Hook | Event | What it does |
 |------|-------|-------------|
-| `bound-guard.sh` | PreToolUse:Edit/Write | Parses CLAUDE.md DANGER ZONES, **blocks** edits to protected files (exit 2) |
+| `bound-guard.sh` | PreToolUse:Edit/Write | Parses CLAUDE.md DANGER ZONES, **blocks** edits to protected files (exit 2). Path-segment-aware matching. |
 | `root-cause-tracker.sh` | PostToolUse:Edit/Write | Tracks per-file edit count, warns at 3+, strongly warns at 5+ |
 | `drift-detector.sh` | PreToolUse:Edit/Write | Warns when touching 5+ directories (scope drift) |
+| `momentum-gate.sh` | PostToolUse:Edit/Write/Read | Tracks read/write ratio, warns when stuck in analysis paralysis (3:1+ ratio) |
 | `recall-gate.sh` | PreCompact | Re-injects BOUND into context before compression |
 
 Verified in live Claude Code sessions:
@@ -290,12 +340,13 @@ See the full session logs: [Blockchain L1](examples/blockchain-l1/session-log.md
 
 ```
 program.md          — methodology instructions (human edits this)
-framework.py        — runtime CLI: state, verification, logging (agent uses this)
+framework.py        — runtime CLI: state, verification, logging, reflective log
 prepare.py          — project scanning and initialization (not modified)
 hooks/
   bound-guard.sh      DANGER ZONE enforcement (PreToolUse, exit 2 block)
   root-cause-tracker.sh  repeated-edit detection (PostToolUse)
   drift-detector.sh   scope drift warning (PreToolUse)
+  momentum-gate.sh    read/write ratio tracking (PostToolUse)
   recall-gate.sh      BOUND re-injection on context compaction (PreCompact)
   settings.json.template  ready-to-use hooks configuration
 modules/
@@ -308,14 +359,16 @@ modules/
   remediation.md      autonomous remediation playbook
 templates/            starter templates for CLAUDE.md, phase plans, checklists
 examples/             real-world BOUND definitions from four project types
+tests/               415 tests covering all runtime logic
 ```
 
 ## Design Choices
 
 - **Boundaries before code.** Define what must never break before writing any code. A financial system's NEVER DO list prevents more bugs than any test suite.
 - **Autonomous remediation.** Unlike monitoring tools that detect-and-alert, Ouro Loop agents detect-decide-act-report. Like `autoresearch` auto-reverts when val_bpb regresses, Ouro Loop auto-remediates when verification fails — inside BOUND, no human permission needed.
+- **Structured self-reflection.** Every iteration writes a three-layer log (WHAT/WHY/PATTERN) that the agent reads at the start of the next iteration. No raw session replay — just the facts, decisions, and detected behavioral patterns.
 - **Three files that matter.** `program.md` (methodology), `framework.py` (runtime), `prepare.py` (init). Everything else is reference.
-- **Zero dependencies.** Pure Python 3.10+. Works with any AI agent, any language, any project type.
+- **Zero dependencies.** Pure Python 3.10+. `pip install ouro-loop`. Works with any AI agent, any language, any project type.
 
 ## Comparison with autoresearch
 
@@ -387,7 +440,7 @@ A: Ouro Loop addresses context decay through the RECALL verification gate and th
 A: As long as phases remain. Each phase is independently verifiable, so the agent can run for hours across many phases. The NEVER STOP instruction in `program.md` keeps the loop going until all phases pass or an EMERGENCY-level issue is hit.
 
 **Q: Do I need to install anything?**
-A: No. Zero dependencies. Pure Python 3.10+ standard library. Clone the repo and point your agent at `program.md`. Optionally install hooks for runtime enforcement.
+A: `pip install ouro-loop` — or just clone the repo. Zero external dependencies. Pure Python 3.10+ standard library. Point your agent at `program.md`. Optionally install hooks for runtime enforcement.
 
 **Q: When should I NOT use Ouro Loop?**
 A: Don't use Ouro Loop for quick prototypes, hackathon projects, or single-file scripts — the BOUND setup overhead isn't worth it. It's also not designed for real-time interactive coding sessions. Ouro Loop shines when you need to "set it and let it run" — overnight builds, long-running refactors, and multi-phase autonomous development on codebases with critical constraints.
