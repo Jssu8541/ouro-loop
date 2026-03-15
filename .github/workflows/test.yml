@@ -24,7 +24,7 @@ jobs:
         run: pip install pytest pytest-cov
 
       - name: Run tests with coverage
-        run: python -m pytest tests/ -v --cov=. --cov-report=term-missing --cov-fail-under=70
+        run: python -m pytest tests/ -v --cov=framework --cov=prepare --cov-report=term-missing --cov-fail-under=70
 
   lint:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install linters
-        run: pip install ruff bandit
+        run: pip install "ruff>=0.8,<1.0" bandit
 
       - name: Ruff lint
         run: ruff check framework.py prepare.py

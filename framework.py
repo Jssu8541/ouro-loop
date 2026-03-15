@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import json
+import shutil
 import argparse
 import subprocess
 from collections import Counter
@@ -392,14 +393,16 @@ def run_verification(project_path: str) -> dict:
         state["bound_defined"] = bound_data["has_bound"]
         save_state(project_path, state)
 
-    # Layer 1: Gates
-    results["layer1_gates"] = run_gates(project_path)
+    # Layer 1: Gates (pass cached bound_data to avoid re-parsing)
+    results["layer1_gates"] = run_gates(project_path, _bound_data=bound_data)
 
     # Layer 2: Self-assessment
-    results["layer2_self"] = run_self_assessment(project_path)
+    results["layer2_self"] = run_self_assessment(project_path, _bound_data=bound_data)
 
     # Layer 3: External review triggers
-    results["layer3_review"] = _check_layer3_triggers(project_path, results)
+    results["layer3_review"] = _check_layer3_triggers(
+        project_path, results, _bound_data=bound_data
+    )
 
     # Determine overall verdict
     gate_failures = [
@@ -427,7 +430,9 @@ def run_verification(project_path: str) -> dict:
     return results
 
 
-def _check_layer3_triggers(project_path: str, current_results: dict) -> dict:
+def _check_layer3_triggers(
+    project_path: str, current_results: dict, _bound_data: dict = None
+) -> dict:
     """Layer 3: Check if external (human) review is required.
 
     Triggers:
@@ -473,11 +478,12 @@ def _check_layer3_triggers(project_path: str, current_results: dict) -> dict:
             )
 
     # Check complexity level (architectural = always review)
-    bound_data = parse_claude_md(project_path)
+    if _bound_data is None:
+        _bound_data = parse_claude_md(project_path)
     changed_files = relevance.get("files", [])
     if changed_files:
         complexity = detect_complexity(
-            project_path, changed_files, bound_data["danger_zones"]
+            project_path, changed_files, _bound_data["danger_zones"]
         )
         if complexity["level"] == "architectural":
             review["required"] = True
@@ -488,10 +494,12 @@ def _check_layer3_triggers(project_path: str, current_results: dict) -> dict:
     return review
 
 
-def run_gates(project_path: str) -> dict:
+def run_gates(project_path: str, _bound_data: dict = None) -> dict:
     """Layer 1: Automated gates (EXIST, RELEVANCE, ROOT_CAUSE, RECALL, MOMENTUM)."""
     gates = {}
-    bound_data = parse_claude_md(project_path)
+    if _bound_data is None:
+        _bound_data = parse_claude_md(project_path)
+    bound_data = _bound_data
     danger_zones = bound_data["danger_zones"]
 
     # EXIST gate: check that key files exist + DANGER ZONE awareness
@@ -623,12 +631,14 @@ def run_gates(project_path: str) -> dict:
     return gates
 
 
-def run_self_assessment(project_path: str) -> dict:
+def run_self_assessment(project_path: str, _bound_data: dict = None) -> dict:
     """Layer 2: Self-assessment checks."""
     checks = {}
 
     # BOUND compliance: use parse_claude_md() for structured check
-    bound_data = parse_claude_md(project_path)
+    bound_data = (
+        _bound_data if _bound_data is not None else parse_claude_md(project_path)
+    )
     claude_md = _get_claude_md_path(project_path)
     if os.path.exists(claude_md):
         # File exists but parse returned empty content → read error
@@ -965,10 +975,14 @@ def write_reflective_log(project_path: str, entry: dict):
         with open(tmp_path, "w", encoding="utf-8") as f:
             for e in entries:
                 f.write(json.dumps(e, ensure_ascii=False) + "\n")
-        os.replace(tmp_path, log_path)
+        try:
+            os.replace(tmp_path, log_path)
+        except OSError:
+            # Fallback for cross-device moves (Docker volumes, NFS, etc.)
+            shutil.move(tmp_path, log_path)
     except OSError as e:
         print(f"Warning: Could not write reflective log: {e}")
-        # Clean up temp file if rename failed
+        # Clean up temp file if write or move failed
         if os.path.exists(tmp_path):
             try:
                 os.remove(tmp_path)

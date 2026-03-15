@@ -182,7 +182,8 @@ class TestFileInDangerZone(unittest.TestCase):
         )
         self.assertEqual(result, "src/payments/")
 
-    def test_contains_match(self):
+    def test_file_zone_segment_match_in_nested_path(self):
+        """File zone 'auth/core.py' matches 'lib/auth/core.py' via segment subsequence."""
         result = framework._file_in_danger_zone(
             "lib/auth/core.py", ["auth/core.py"]
         )

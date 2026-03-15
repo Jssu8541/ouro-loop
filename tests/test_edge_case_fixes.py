@@ -142,17 +142,17 @@ class TestVelocitySensitivity(unittest.TestCase):
         self.assertEqual(result["velocity_trend"], "DECELERATING")
 
     def test_mild_variation_is_stable(self):
-        """5 PASS + 1 FAIL → swing = 0.33, but within STABLE range."""
+        """Alternating results within threshold → STABLE."""
         history = (
-            [{"verdict": "PASS", "stage": "BUILD"}] * 4 +
+            [{"verdict": "PASS", "stage": "BUILD"}] * 2 +
             [{"verdict": "FAIL", "stage": "BUILD"}] * 1 +
-            [{"verdict": "PASS", "stage": "BUILD"}] * 1
+            [{"verdict": "PASS", "stage": "BUILD"}] * 2 +
+            [{"verdict": "FAIL", "stage": "BUILD"}] * 1
         )
         result = framework.detect_patterns(history)
-        # first half: [P,P,P] = 1.0, second half: [P,F,P] = 0.67
-        # diff = -0.33, > -0.3 threshold → could be DECELERATING
-        # but swing is moderate — this tests the threshold is correct
-        self.assertIn(result["velocity_trend"], ["STABLE", "DECELERATING"])
+        # first half: [P,P,F] = 0.67, second half: [P,P,F] = 0.67
+        # diff = 0.0, within ±0.3 threshold → STABLE
+        self.assertEqual(result["velocity_trend"], "STABLE")
 
 
 # ---------------------------------------------------------------------------
