@@ -101,16 +101,39 @@ Update state, log iteration, write learnings every 10 rounds. At ~70% context ->
 
 ---
 
-## Runner
+## Runner — The Immortal Daemon
+
+The runner is designed to survive everything short of a reboot. When you run `make sentinel-start`, the process detaches from your terminal and becomes immortal:
+
+```
+make sentinel-start
+  └→ nohup sentinel-runner.sh & disown
+       └→ Terminal closes? SIGHUP absorbed by nohup
+            └→ macOS launchd (PID 1) adopts the orphan
+                 └→ Sleep/wake? launchd children survive
+                      └→ Result: sentinel lives until you kill it
+```
+
+No systemd service files. No launchd plists. No Docker. Just Unix primitives — `nohup`, `&`, `disown` — and the OS doing what it was designed to do.
+
+!!! tip "Battle-tested"
+    This mechanism was validated in production: two runner processes survived 33+ hours across multiple macOS sleep/wake cycles, terminal closures, and SSH disconnects — accumulating 331 review rounds and 469 findings without interruption.
 
 ```bash
-.ouro/sentinel/sentinel-runner.sh start    # Start daemon
-.ouro/sentinel/sentinel-runner.sh stop     # Graceful shutdown
+.ouro/sentinel/sentinel-runner.sh start    # Start immortal daemon
+.ouro/sentinel/sentinel-runner.sh stop     # Graceful shutdown (kills orphans too)
 .ouro/sentinel/sentinel-runner.sh status   # Check if running
 .ouro/sentinel/sentinel-runner.sh restart  # Stop + start
 ```
 
-Features: session rotation, crash recovery, PID management, log rotation at 10MB, interruptible sleep.
+Features:
+
+- **Immortal process**: `nohup` + `disown` = survives terminal close, SSH disconnect, sleep/wake
+- **Orphan-proof stop**: PID file + `pgrep` fallback — no zombie processes even if PID file is lost
+- **Duplicate prevention**: `cmd_start` checks both PID file and process table before launching
+- **Session rotation**: ROTATE/DONE/BLOCKED signals from Claude sessions
+- **Crash recovery**: validates state, backs up, cleans up worktrees between sessions
+- **Log rotation**: gzip at 10MB, interruptible sleep between sessions
 
 ---
 

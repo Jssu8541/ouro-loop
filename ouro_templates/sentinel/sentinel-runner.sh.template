@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# Ouro Sentinel Runner — Daemon that manages the continuous review loop.
+# Ouro Sentinel Runner — Immortal daemon for the continuous review loop.
+#
+# Designed to survive terminal closes, SSH disconnects, and sleep/wake cycles.
+# Launched via: nohup sentinel-runner.sh start & disown
+# Stopped via:  sentinel-runner.sh stop (PID file + pgrep orphan cleanup)
 #
 # Usage:
 #   sentinel-runner.sh start    # Start the sentinel loop
-#   sentinel-runner.sh stop     # Stop the sentinel loop
+#   sentinel-runner.sh stop     # Stop (kills orphans too)
 #   sentinel-runner.sh restart  # Restart the sentinel loop
 #   sentinel-runner.sh status   # Check if running
 #
@@ -120,10 +124,20 @@ trap handle_signal SIGTERM SIGINT
 # ---------------------------------------------------------------------------
 
 cmd_start() {
+    # Check PID file
     if is_running; then
         local pid
         pid=$(cat "${PID_FILE}")
         echo "Sentinel already running (PID: ${pid})"
+        exit 0
+    fi
+
+    # Check for orphaned processes (PID file lost but process alive)
+    local orphans
+    orphans=$(pgrep -f "sentinel-runner.sh start" 2>/dev/null | grep -v "^$$\$" || true)
+    if [ -n "${orphans}" ]; then
+        echo "Sentinel already running (orphan PIDs: ${orphans})"
+        echo "Run 'sentinel-runner.sh stop' first to clean up"
         exit 0
     fi
 
@@ -216,32 +230,48 @@ cmd_start() {
 }
 
 cmd_stop() {
-    if ! is_running; then
-        echo "Sentinel is not running"
-        rm -f "${PID_FILE}"
-        exit 0
+    local stopped=false
+
+    # Try PID file first
+    if is_running; then
+        local pid
+        pid=$(cat "${PID_FILE}")
+        echo "Stopping Sentinel (PID: ${pid})..."
+        kill "${pid}" 2>/dev/null || true
+
+        # Wait for graceful shutdown (up to 30s)
+        local wait=0
+        while kill -0 "${pid}" 2>/dev/null && [ ${wait} -lt 30 ]; do
+            sleep 1
+            wait=$((wait + 1))
+        done
+
+        if kill -0 "${pid}" 2>/dev/null; then
+            echo "Force killing..."
+            kill -9 "${pid}" 2>/dev/null || true
+        fi
+        stopped=true
     fi
 
-    local pid
-    pid=$(cat "${PID_FILE}")
-    echo "Stopping Sentinel (PID: ${pid})..."
-    kill "${pid}" 2>/dev/null || true
-
-    # Wait for graceful shutdown (up to 30s)
-    local wait=0
-    while kill -0 "${pid}" 2>/dev/null && [ ${wait} -lt 30 ]; do
-        sleep 1
-        wait=$((wait + 1))
-    done
-
-    if kill -0 "${pid}" 2>/dev/null; then
-        echo "Force killing..."
-        kill -9 "${pid}" 2>/dev/null || true
+    # Fallback: kill any orphaned sentinel-runner processes for this project
+    local orphans
+    orphans=$(pgrep -f "sentinel-runner.sh start" 2>/dev/null | grep -v "^$$\$" || true)
+    if [ -n "${orphans}" ]; then
+        echo "Killing orphaned sentinel processes: ${orphans}"
+        echo "${orphans}" | xargs kill 2>/dev/null || true
+        sleep 2
+        echo "${orphans}" | xargs kill -9 2>/dev/null || true
+        stopped=true
     fi
 
     rm -f "${PID_FILE}"
     cleanup_worktrees
-    echo "Sentinel stopped."
+
+    if ${stopped}; then
+        echo "Sentinel stopped."
+    else
+        echo "Sentinel is not running"
+    fi
 }
 
 cmd_restart() {

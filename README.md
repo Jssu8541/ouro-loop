@@ -429,11 +429,22 @@ make sentinel-dashboard    # Watch live progress
 
 ### What the Runner Does
 
-The runner (`sentinel-runner.sh`) is a bash daemon that:
+The runner (`sentinel-runner.sh`) is an immortal daemon — once started, it survives terminal closes, SSH disconnects, and even macOS sleep/wake cycles:
+
+```
+make sentinel-start
+  └→ nohup sentinel-runner.sh & disown
+       └→ Terminal closes? SIGHUP absorbed by nohup
+            └→ macOS launchd (PID 1) adopts the orphan
+                 └→ Sleep/wake? launchd children survive
+                      └→ Result: sentinel lives until you kill it
+```
+
 - Launches Claude Code sessions in a loop with `--permission-mode bypassPermissions`
 - Each session: reads state → picks highest-priority partition → scans → records findings → updates state
 - Handles crashes: cleans up worktrees, validates state, backs up, restarts
-- Rotates logs at 10MB, manages PID files, responds to SIGTERM/SIGINT
+- Rotates logs at 10MB, responds to SIGTERM/SIGINT
+- Orphan-proof stop: `make sentinel-stop` uses both PID file and `pgrep` fallback — no zombie processes
 
 ### Prerequisites
 

@@ -2,7 +2,7 @@
 # Add these to your project Makefile
 
 sentinel-start:
-	@{{SENTINEL_DIR}}/sentinel-runner.sh start
+	@nohup {{SENTINEL_DIR}}/sentinel-runner.sh start >> {{SENTINEL_DIR}}/runner.log 2>&1 & disown
 
 sentinel-stop:
 	@{{SENTINEL_DIR}}/sentinel-runner.sh stop
